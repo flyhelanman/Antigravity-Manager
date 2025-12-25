@@ -21,13 +21,8 @@ jobs:
             args: '--target universal-apple-darwin'
           - platform: 'ubuntu-22.04'
             args: ''
-            pkg_config_path: ''
-          - platform: 'ubuntu-22.04'
-            args: '--target aarch64-unknown-linux-gnu'
-            pkg_config_path: '/usr/lib/aarch64-linux-gnu/pkgconfig'
           - platform: 'windows-latest'
             args: ''
-            pkg_config_path: ''
 
     runs-on: ${{ matrix.platform }}
 
@@ -43,29 +38,7 @@ jobs:
           # Tauri 2 可能需要 libnm-dev
           sudo apt-get install -y libnm-dev
 
-      - name: Install dependencies (Linux ARM64)
-        if: matrix.platform == 'ubuntu-22.04' && contains(matrix.args, 'aarch64')
-        run: |
-          sudo dpkg --add-architecture arm64
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev:arm64 \
-            build-essential \
-            curl \
-            wget \
-            file \
-            libssl-dev:arm64 \
-            libgtk-3-dev:arm64 \
-            libayatana-appindicator3-dev:arm64 \
-            librsvg2-dev:arm64 \
-            patchelf \
-            pkg-config \
-            libsoup-3.0-dev:arm64 \
-            javascriptcoregtk-4.1:arm64 \
-            libjavascriptcoregtk-4.1-dev:arm64 \
-            libdbus-1-dev:arm64 \
-            libnm-dev:arm64
+
 
       - name: Rust setup
         uses: dtolnay/rust-toolchain@stable
@@ -74,16 +47,7 @@ jobs:
           # And install Linux ARM target if needed
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || (contains(matrix.args, 'aarch64') && 'aarch64-unknown-linux-gnu' || '') }}
 
-      - name: Configure Cargo for Cross Compilation (Linux ARM64)
-        if: contains(matrix.args, 'aarch64') && runner.os == 'Linux'
-        run: |
-          echo "PKG_CONFIG_PATH=${{ matrix.pkg_config_path }}" >> $GITHUB_ENV
-          echo "PKG_CONFIG_ALLOW_CROSS=1" >> $GITHUB_ENV
-          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-          
-          # 针对 OpenSSL 交叉编译
-          echo "OPENSSL_LIB_DIR=/usr/lib/aarch64-linux-gnu" >> $GITHUB_ENV
-          echo "OPENSSL_INCLUDE_DIR=/usr/include" >> $GITHUB_ENV
+
           
       - name: Node.js setup
         uses: actions/setup-node@v4
